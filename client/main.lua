@@ -1,5 +1,4 @@
 local Skating = {}
-local connected = false
 local active = false
 
 -- Toggle skateboard on/off from inventory use
@@ -20,7 +19,6 @@ function Skating.Start()
         GetHashKey('bmx'),
         68070371,
         GetHashKey('p_defilied_ragdoll_01_s'),
-        'pickup_object',
         'move_strafe@stealth',
         'move_crouch_proto',
     })
@@ -37,7 +35,6 @@ function Skating.Start()
     while not DoesEntityExist(Skating.board) do Wait(5) end
 
     SetEntityNoCollisionEntity(Skating.vehicle, ped, false)
-    SetEntityCollision(Skating.vehicle, false, true)
     SetEntityVisible(Skating.vehicle, false, false)
     AttachEntityToEntity(Skating.board, Skating.vehicle, GetPedBoneIndex(ped, 28422),
         0.0, 0.0, -0.40, 0.0, 0.0, 90.0, false, true, true, true, 1, true)
@@ -52,56 +49,17 @@ function Skating.Start()
 
     while not IsPedInVehicle(Skating.driver, Skating.vehicle) do Wait(0) end
 
+    -- Mount player immediately
+    TaskPlayAnim(ped, 'move_strafe@stealth', 'idle', 8.0, 8.0, -1, 1, 1.0, false, false, false)
+    AttachEntityToEntity(ped, Skating.vehicle, 20,
+        0.0, 0.0, 0.7, 0.0, 0.0, -15.0, true, true, false, true, 1, true)
+    SetEntityCollision(ped, true, true)
+
     active = true
-    Skating.PlaceBoard()
-    Skating.Loop()
-end
-
-function Skating.PlaceBoard()
-    if not DoesEntityExist(Skating.vehicle) then return end
-
-    local ped = cache.ped
-    AttachEntityToEntity(Skating.vehicle, ped, GetPedBoneIndex(ped, 28422),
-        -0.1, 0.0, -0.2, 70.0, 0.0, 270.0, 1, 1, 0, 0, 2, 1)
-    TaskPlayAnim(ped, 'pickup_object', 'pickup_low', 8.0, -8.0, -1, 0, 0, false, false, false)
-    Wait(800)
-    DetachEntity(Skating.vehicle, false, true)
-    PlaceObjectOnGroundProperly(Skating.vehicle)
-    FreezeEntityPosition(Skating.vehicle, true)
+    Skating.speed = 0
 
     lib.notify({ description = Config.Controls, type = 'info' })
-end
-
-function Skating.PickupBoard()
-    if not DoesEntityExist(Skating.vehicle) then return end
-
-    local ped = cache.ped
-    TaskPlayAnim(ped, 'pickup_object', 'pickup_low', 8.0, -8.0, -1, 0, 0, false, false, false)
-    Wait(600)
-    AttachEntityToEntity(Skating.vehicle, ped, GetPedBoneIndex(ped, 28422),
-        -0.1, 0.0, -0.2, 70.0, 0.0, 270.0, 1, 1, 0, 0, 2, 1)
-    Wait(900)
-    Skating.Clear()
-end
-
-function Skating.MountPlayer(toggle)
-    local ped = cache.ped
-
-    if toggle then
-        FreezeEntityPosition(Skating.vehicle, false)
-        TaskPlayAnim(ped, 'move_strafe@stealth', 'idle', 8.0, 8.0, -1, 1, 1.0, false, false, false)
-        AttachEntityToEntity(ped, Skating.vehicle, 20,
-            0.0, 0.0, 0.7, 0.0, 0.0, -15.0, true, true, false, true, 1, true)
-        SetEntityCollision(ped, true, true)
-    else
-        DetachEntity(ped, false, false)
-        StopAnimTask(ped, 'move_strafe@stealth', 'idle', 1.0)
-        StopAnimTask(ped, 'move_crouch_proto', 'idle_intro', 1.0)
-        TaskVehicleTempAction(Skating.driver, Skating.vehicle, 3, 1)
-        FreezeEntityPosition(Skating.vehicle, true)
-    end
-
-    connected = toggle
+    Skating.Loop()
 end
 
 function Skating.ShouldRagdoll()
@@ -122,7 +80,7 @@ function Skating.ShouldRagdoll()
 end
 
 function Skating.HandleJump()
-    if not connected or IsEntityInAir(Skating.vehicle) then return end
+    if IsEntityInAir(Skating.vehicle) then return end
 
     local ped = cache.ped
     local vel = GetEntityVelocity(Skating.vehicle)
@@ -138,36 +96,14 @@ function Skating.HandleJump()
     local boost = math.min(Config.MaxJumpHeight * duration / 250.0, Config.MaxJumpHeight)
     StopAnimTask(ped, 'move_crouch_proto', 'idle_intro', 1.0)
 
-    if connected then
+    if active then
         SetEntityVelocity(Skating.vehicle, vel.x, vel.y, vel.z + boost)
         TaskPlayAnim(ped, 'move_strafe@stealth', 'idle', 8.0, 2.0, -1, 1, 1.0, false, false, false)
     end
 end
 
-function Skating.HandleMovement(distance)
+function Skating.HandleMovement()
     local ped = cache.ped
-
-    -- E to pick up (close range)
-    if distance <= 1.5 and IsControlJustPressed(0, 38) then
-        Skating.PickupBoard()
-        return
-    end
-
-    -- G to mount/dismount (close range)
-    if distance <= 1.5 and IsControlJustReleased(0, 113) then
-        if connected then
-            Skating.MountPlayer(false)
-        elseif not IsPedRagdoll(ped) then
-            Wait(200)
-            Skating.MountPlayer(true)
-        end
-    end
-
-    -- Too far from board — coast to stop
-    if distance >= Config.LoseConnectionDistance then
-        TaskVehicleTempAction(Skating.driver, Skating.vehicle, 6, 2500)
-        return
-    end
 
     -- Keep entity control
     if not NetworkHasControlOfEntity(Skating.driver) then
@@ -183,66 +119,58 @@ function Skating.HandleMovement(distance)
     SetEntityInvincible(Skating.vehicle, true)
     StopCurrentPlayingAmbientSpeech(Skating.driver)
 
-    -- Ragdoll check
-    if connected then
-        Skating.speed = GetEntitySpeed(Skating.vehicle) * 3.6
-        if Skating.ShouldRagdoll() then
-            Skating.MountPlayer(false)
-            SetPedToRagdoll(ped, 5000, 4000, 0, true, true, false)
-            connected = false
+    -- Ragdoll check — wipe out = board gone, use item again
+    Skating.speed = GetEntitySpeed(Skating.vehicle) * 3.6
+    if Skating.ShouldRagdoll() then
+        Skating.Clear()
+        SetPedToRagdoll(ped, 5000, 4000, 0, true, true, false)
+        return
+    end
+
+    -- Movement
+    local fwd   = IsControlPressed(0, 32)
+    local back  = IsControlPressed(0, 33)
+    local left  = IsControlPressed(0, 34)
+    local right = IsControlPressed(0, 35)
+
+    if IsControlPressed(0, 22) then
+        Skating.HandleJump()
+    elseif not overSpeed then
+        if fwd and back then
+            TaskVehicleTempAction(Skating.driver, Skating.vehicle, 30, 100)
+        elseif fwd and left then
+            TaskVehicleTempAction(Skating.driver, Skating.vehicle, 7, 1)
+        elseif fwd and right then
+            TaskVehicleTempAction(Skating.driver, Skating.vehicle, 8, 1)
+        elseif back and left then
+            TaskVehicleTempAction(Skating.driver, Skating.vehicle, 13, 1)
+        elseif back and right then
+            TaskVehicleTempAction(Skating.driver, Skating.vehicle, 14, 1)
+        elseif fwd then
+            TaskVehicleTempAction(Skating.driver, Skating.vehicle, 9, 1)
+        elseif back then
+            TaskVehicleTempAction(Skating.driver, Skating.vehicle, 22, 1)
+        elseif left then
+            TaskVehicleTempAction(Skating.driver, Skating.vehicle, 4, 1)
+        elseif right then
+            TaskVehicleTempAction(Skating.driver, Skating.vehicle, 5, 1)
         end
     end
 
-    -- Movement (only when mounted)
-    if connected then
-        local fwd   = IsControlPressed(0, 32)
-        local back  = IsControlPressed(0, 33)
-        local left  = IsControlPressed(0, 34)
-        local right = IsControlPressed(0, 35)
-
-        if IsControlPressed(0, 22) then
-            Skating.HandleJump()
-        elseif not overSpeed then
-            if fwd and back then
-                TaskVehicleTempAction(Skating.driver, Skating.vehicle, 30, 100)
-            elseif fwd and left then
-                TaskVehicleTempAction(Skating.driver, Skating.vehicle, 7, 1)
-            elseif fwd and right then
-                TaskVehicleTempAction(Skating.driver, Skating.vehicle, 8, 1)
-            elseif back and left then
-                TaskVehicleTempAction(Skating.driver, Skating.vehicle, 13, 1)
-            elseif back and right then
-                TaskVehicleTempAction(Skating.driver, Skating.vehicle, 14, 1)
-            elseif fwd then
-                TaskVehicleTempAction(Skating.driver, Skating.vehicle, 9, 1)
-            elseif back then
-                TaskVehicleTempAction(Skating.driver, Skating.vehicle, 22, 1)
-            elseif left then
-                TaskVehicleTempAction(Skating.driver, Skating.vehicle, 4, 1)
-            elseif right then
-                TaskVehicleTempAction(Skating.driver, Skating.vehicle, 5, 1)
-            end
-        end
-
-        if (IsControlJustReleased(0, 32) or IsControlJustReleased(0, 33)) and not overSpeed then
-            TaskVehicleTempAction(Skating.driver, Skating.vehicle, 6, 2500)
-        end
+    if (IsControlJustReleased(0, 32) or IsControlJustReleased(0, 33)) and not overSpeed then
+        TaskVehicleTempAction(Skating.driver, Skating.vehicle, 6, 2500)
     end
 end
 
 function Skating.Loop()
     CreateThread(function()
         while active and DoesEntityExist(Skating.vehicle) and DoesEntityExist(Skating.driver) do
-            local ped = cache.ped
-
-            -- Auto-cleanup on death
-            if IsPedDeadOrDying(ped, false) then
+            if IsPedDeadOrDying(cache.ped, false) then
                 Skating.Clear()
                 break
             end
 
-            local distance = #(GetEntityCoords(ped) - GetEntityCoords(Skating.vehicle))
-            Skating.HandleMovement(distance)
+            Skating.HandleMovement()
             Wait(5)
         end
     end)
@@ -251,16 +179,12 @@ end
 function Skating.Clear()
     if not active then return end
 
-    -- Dismount player before destroying entities
-    if connected then
-        local ped = cache.ped
-        DetachEntity(ped, false, false)
-        StopAnimTask(ped, 'move_strafe@stealth', 'idle', 1.0)
-        StopAnimTask(ped, 'move_crouch_proto', 'idle_intro', 1.0)
-    end
+    local ped = cache.ped
+    DetachEntity(ped, false, false)
+    StopAnimTask(ped, 'move_strafe@stealth', 'idle', 1.0)
+    StopAnimTask(ped, 'move_crouch_proto', 'idle_intro', 1.0)
 
     active = false
-    connected = false
     Skating.speed = 0
 
     if DoesEntityExist(Skating.vehicle) then
