@@ -1,8 +1,10 @@
 local Skating = {}
 local active = false
+local busy = false
 
 -- Toggle skateboard on/off from inventory use
 RegisterNetEvent('astudios-skating:client:toggle', function()
+    if busy then return end
     if active then
         Skating.Clear()
     else
@@ -11,7 +13,8 @@ RegisterNetEvent('astudios-skating:client:toggle', function()
 end)
 
 function Skating.Start()
-    if active then return end
+    if active or busy then return end
+    busy = true
 
     local ped = cache.ped
 
@@ -30,12 +33,22 @@ function Skating.Start()
     Skating.vehicle = CreateVehicle(GetHashKey('bmx'), spawnCoords, spawnHeading, true, false)
     while not DoesEntityExist(Skating.vehicle) do Wait(5) end
 
+    SetEntityVisible(Skating.vehicle, false, false)
+
+    -- No collision between BMX and ALL peds (player, pets, NPCs)
+    -- Prevents nearby peds from bumping/flipping the invisible bike
+    SetEntityNoCollisionEntity(Skating.vehicle, ped, false)
+    local allPeds = GetGamePool('CPed')
+    for i = 1, #allPeds do
+        if allPeds[i] ~= ped then
+            SetEntityNoCollisionEntity(Skating.vehicle, allPeds[i], false)
+            SetEntityNoCollisionEntity(allPeds[i], Skating.vehicle, false)
+        end
+    end
+
     -- Skateboard prop
     Skating.board = CreateObject(GetHashKey('p_defilied_ragdoll_01_s'), 0.0, 0.0, 0.0, true, true, true)
     while not DoesEntityExist(Skating.board) do Wait(5) end
-
-    SetEntityNoCollisionEntity(Skating.vehicle, ped, false)
-    SetEntityVisible(Skating.vehicle, false, false)
     AttachEntityToEntity(Skating.board, Skating.vehicle, GetPedBoneIndex(ped, 28422),
         0.0, 0.0, -0.40, 0.0, 0.0, 90.0, false, true, true, true, 1, true)
 
@@ -47,7 +60,19 @@ function Skating.Start()
     FreezeEntityPosition(Skating.driver, true)
     TaskWarpPedIntoVehicle(Skating.driver, Skating.vehicle, -1)
 
-    while not IsPedInVehicle(Skating.driver, Skating.vehicle) do Wait(0) end
+    -- Wait for driver with timeout to prevent infinite hang
+    local warpTimeout = 50
+    while not IsPedInVehicle(Skating.driver, Skating.vehicle) do
+        Wait(0)
+        warpTimeout = warpTimeout - 1
+        if warpTimeout <= 0 then
+            -- Failed to seat driver — abort and clean up
+            Skating.CleanEntities()
+            busy = false
+            lib.notify({ description = 'Failed to start skateboard, try again', type = 'error' })
+            return
+        end
+    end
 
     -- Mount player immediately
     TaskPlayAnim(ped, 'move_strafe@stealth', 'idle', 8.0, 8.0, -1, 1, 1.0, false, false, false)
@@ -56,7 +81,9 @@ function Skating.Start()
     SetEntityCollision(ped, true, true)
 
     active = true
+    busy = false
     Skating.speed = 0
+    Skating.graceTimer = 100 -- skip ragdoll checks for first ~500ms while physics settle
 
     lib.notify({ description = Config.Controls, type = 'info' })
     Skating.Loop()
@@ -120,8 +147,12 @@ function Skating.HandleMovement()
     StopCurrentPlayingAmbientSpeech(Skating.driver)
 
     -- Ragdoll check — wipe out = board gone, use item again
+    -- Grace period skips ragdoll for first ~500ms while physics settle
     Skating.speed = GetEntitySpeed(Skating.vehicle) * 3.6
-    if Skating.ShouldRagdoll() then
+    if Skating.graceTimer > 0 then
+        Skating.graceTimer = Skating.graceTimer - 1
+    end
+    if Skating.graceTimer <= 0 and Skating.ShouldRagdoll() then
         Skating.Clear()
         SetPedToRagdoll(ped, 5000, 4000, 0, true, true, false)
         return
@@ -176,6 +207,21 @@ function Skating.Loop()
     end)
 end
 
+-- Delete entities without state guards (used for abort during Start)
+function Skating.CleanEntities()
+    if DoesEntityExist(Skating.vehicle) then
+        DetachEntity(Skating.vehicle, true, true)
+        DeleteVehicle(Skating.vehicle)
+    end
+    if DoesEntityExist(Skating.board) then
+        DeleteEntity(Skating.board)
+    end
+    if DoesEntityExist(Skating.driver) then
+        DeleteEntity(Skating.driver)
+    end
+    Skating.UnloadModels()
+end
+
 function Skating.Clear()
     if not active then return end
 
@@ -185,6 +231,7 @@ function Skating.Clear()
     StopAnimTask(ped, 'move_crouch_proto', 'idle_intro', 1.0)
 
     active = false
+    busy = false
     Skating.speed = 0
 
     if DoesEntityExist(Skating.vehicle) then
