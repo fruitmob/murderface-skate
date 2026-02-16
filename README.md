@@ -52,11 +52,11 @@ That's it. No SQL, no extra dependencies, no config rabbit holes.
 
 | Key | Action |
 |-----|--------|
-| **Use item** | Place board on ground / Toggle off |
-| **G** | Mount / Dismount |
+| **Use item** | Spawn board and ride / Dismount and despawn |
 | **W/A/S/D** | Move / Steer |
 | **Space** (hold & release) | Jump — hold longer for more height |
-| **E** | Pick up board (close range, with animation) |
+
+Wipe out at high speed? Board despawns automatically — just use the item again.
 
 Controls are shown in the item tooltip when you hover over it in inventory.
 
@@ -67,7 +67,6 @@ Everything tunable lives in `shared/config.lua`:
 ```lua
 Config.MaxSpeedKmh = 52            -- Max speed in km/h (default: 52)
 Config.MaxJumpHeight = 6.5         -- Jump boost (6.5 = superhuman, ~2.0 = realistic)
-Config.LoseConnectionDistance = 2.0 -- Auto-dismount distance from board
 ```
 
 ## Dependencies
@@ -85,10 +84,9 @@ If you're running Qbox with the ox stack, you already have everything you need.
 - Removed QBCore/ESX dual-framework code (was 100% copy-pasted twice)
 - Replaced `QBCore.Functions.CreateUseableItem` with ox_inventory server export
 - Added ox_lib for notifications and asset loading
-- Added toggle on/off via inventory use
-- Added proper dismount before cleanup (no more stuck-in-animation bugs)
-- Added auto-cleanup on death and resource restart
-- Cleaned up from ~365 lines to ~300
+- Simplified to instant mount/dismount — use item to ride, use again to stop
+- Auto-cleanup on wipeout, death, and resource restart
+- Cleaned up from ~365 lines to ~230
 
 ## Preview
 
