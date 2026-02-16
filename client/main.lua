@@ -190,38 +190,40 @@ function Skating.HandleMovement(distance)
         end
     end
 
-    -- Movement
-    local fwd   = IsControlPressed(0, 32)
-    local back  = IsControlPressed(0, 33)
-    local left  = IsControlPressed(0, 34)
-    local right = IsControlPressed(0, 35)
+    -- Movement (only when mounted)
+    if connected then
+        local fwd   = IsControlPressed(0, 32)
+        local back  = IsControlPressed(0, 33)
+        local left  = IsControlPressed(0, 34)
+        local right = IsControlPressed(0, 35)
 
-    if IsControlPressed(0, 22) and connected then
-        Skating.HandleJump()
-    elseif not overSpeed then
-        if fwd and back then
-            TaskVehicleTempAction(Skating.driver, Skating.vehicle, 30, 100)
-        elseif fwd and left then
-            TaskVehicleTempAction(Skating.driver, Skating.vehicle, 7, 1)
-        elseif fwd and right then
-            TaskVehicleTempAction(Skating.driver, Skating.vehicle, 8, 1)
-        elseif back and left then
-            TaskVehicleTempAction(Skating.driver, Skating.vehicle, 13, 1)
-        elseif back and right then
-            TaskVehicleTempAction(Skating.driver, Skating.vehicle, 14, 1)
-        elseif fwd then
-            TaskVehicleTempAction(Skating.driver, Skating.vehicle, 9, 1)
-        elseif back then
-            TaskVehicleTempAction(Skating.driver, Skating.vehicle, 22, 1)
-        elseif left then
-            TaskVehicleTempAction(Skating.driver, Skating.vehicle, 4, 1)
-        elseif right then
-            TaskVehicleTempAction(Skating.driver, Skating.vehicle, 5, 1)
+        if IsControlPressed(0, 22) then
+            Skating.HandleJump()
+        elseif not overSpeed then
+            if fwd and back then
+                TaskVehicleTempAction(Skating.driver, Skating.vehicle, 30, 100)
+            elseif fwd and left then
+                TaskVehicleTempAction(Skating.driver, Skating.vehicle, 7, 1)
+            elseif fwd and right then
+                TaskVehicleTempAction(Skating.driver, Skating.vehicle, 8, 1)
+            elseif back and left then
+                TaskVehicleTempAction(Skating.driver, Skating.vehicle, 13, 1)
+            elseif back and right then
+                TaskVehicleTempAction(Skating.driver, Skating.vehicle, 14, 1)
+            elseif fwd then
+                TaskVehicleTempAction(Skating.driver, Skating.vehicle, 9, 1)
+            elseif back then
+                TaskVehicleTempAction(Skating.driver, Skating.vehicle, 22, 1)
+            elseif left then
+                TaskVehicleTempAction(Skating.driver, Skating.vehicle, 4, 1)
+            elseif right then
+                TaskVehicleTempAction(Skating.driver, Skating.vehicle, 5, 1)
+            end
         end
-    end
 
-    if (IsControlJustReleased(0, 32) or IsControlJustReleased(0, 33)) and not overSpeed then
-        TaskVehicleTempAction(Skating.driver, Skating.vehicle, 6, 2500)
+        if (IsControlJustReleased(0, 32) or IsControlJustReleased(0, 33)) and not overSpeed then
+            TaskVehicleTempAction(Skating.driver, Skating.vehicle, 6, 2500)
+        end
     end
 end
 
