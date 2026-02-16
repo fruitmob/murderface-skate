@@ -67,6 +67,7 @@ function Skating.PlaceBoard()
     Wait(800)
     DetachEntity(Skating.vehicle, false, true)
     PlaceObjectOnGroundProperly(Skating.vehicle)
+    FreezeEntityPosition(Skating.vehicle, true)
 
     lib.notify({ description = Config.Controls, type = 'info' })
 end
@@ -87,6 +88,7 @@ function Skating.MountPlayer(toggle)
     local ped = cache.ped
 
     if toggle then
+        FreezeEntityPosition(Skating.vehicle, false)
         TaskPlayAnim(ped, 'move_strafe@stealth', 'idle', 8.0, 8.0, -1, 1, 1.0, false, false, false)
         AttachEntityToEntity(ped, Skating.vehicle, 20,
             0.0, 0.0, 0.7, 0.0, 0.0, -15.0, true, true, false, true, 1, true)
@@ -96,6 +98,7 @@ function Skating.MountPlayer(toggle)
         StopAnimTask(ped, 'move_strafe@stealth', 'idle', 1.0)
         StopAnimTask(ped, 'move_crouch_proto', 'idle_intro', 1.0)
         TaskVehicleTempAction(Skating.driver, Skating.vehicle, 3, 1)
+        FreezeEntityPosition(Skating.vehicle, true)
     end
 
     connected = toggle
