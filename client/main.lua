@@ -246,6 +246,14 @@ end
 function Skating.Clear()
     if not active then return end
 
+    -- Dismount player before destroying entities
+    if connected then
+        local ped = cache.ped
+        DetachEntity(ped, false, false)
+        StopAnimTask(ped, 'move_strafe@stealth', 'idle', 1.0)
+        StopAnimTask(ped, 'move_crouch_proto', 'idle_intro', 1.0)
+    end
+
     active = false
     connected = false
     Skating.speed = 0
