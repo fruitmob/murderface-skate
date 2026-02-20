@@ -1,4 +1,4 @@
-# astudios-skating (Qbox + ox Fork)
+# murderface-skate (Qbox + ox Fork)
 
 **Free, open-source skateboarding for FiveM** — drop in, configure, ride.
 
@@ -10,18 +10,20 @@ Converted for the **Qbox + ox_lib + ox_inventory** stack. 5-minute setup, zero e
 
 ## Features
 
-- **Use from inventory** — place your board, use again to pick it up. Simple toggle.
+- **Use from inventory** — toggle on to ride, toggle off to stop. Simple.
 - **Full physics** — WASD steering, charge-jump with Space, ragdoll on high-speed collisions
 - **Clean integration** — ox_inventory item with tooltip controls, ox_lib notifications
 - **Auto-cleanup** — board despawns on death, disconnect, or resource restart. No ghost entities.
-- **Configurable** — speed, jump height, and dismount distance all in one config file
-- **Lightweight** — ~300 lines total, no database, no polling, no bloat
+- **Race-condition safe** — busy-lock prevents double-mount, warp timeout with abort cleanup
+- **Ped-friendly** — invisible BMX has no-collision with all nearby peds (players, pets, NPCs)
+- **Configurable** — speed, jump height, and controls all in one config file
+- **Lightweight** — no database, no polling, no bloat
 
 ## Quick Start
 
 **1.** Clone or download into your resources:
 ```
-git clone https://github.com/fruitmob/astudios-skating.git
+git clone https://github.com/fruitmob/murderface-skate.git
 ```
 
 **2.** Add the item to `ox_inventory/data/items.lua`:
@@ -30,8 +32,8 @@ git clone https://github.com/fruitmob/astudios-skating.git
     label = 'Skateboard',
     weight = 3000,
     consume = 0,
-    description = 'Use to place/pickup. G - Mount/Dismount | Space - Jump | E - Pick up',
-    server = { export = 'astudios-skating.skateboard' },
+    description = 'Use to place/pickup. WASD - Move | Space - Jump',
+    server = { export = 'murderface-skate.skateboard' },
 },
 ```
 
@@ -39,7 +41,7 @@ git clone https://github.com/fruitmob/astudios-skating.git
 
 **4.** Add to `server.cfg`:
 ```cfg
-ensure astudios-skating
+ensure murderface-skate
 ```
 
 **5.** Restart, give yourself a board: `/giveitem [id] skateboard 1`
@@ -86,7 +88,10 @@ If you're running Qbox with the ox stack, you already have everything you need.
 - Added ox_lib for notifications and asset loading
 - Simplified to instant mount/dismount — use item to ride, use again to stop
 - Auto-cleanup on wipeout, death, and resource restart
-- Cleaned up from ~365 lines to ~230
+- Busy-lock to prevent race conditions on rapid toggle
+- No-collision with all nearby peds (players, pets, NPCs)
+- Warp timeout with abort cleanup to prevent infinite hangs
+- Grace timer skips false ragdoll triggers while physics settle
 
 ## Preview
 
@@ -95,7 +100,7 @@ Original demo (core mechanics are the same): https://www.youtube.com/watch?v=sTf
 ## Credits
 
 - **Original script**: [Apex Studios](https://github.com/apx-studios) (Aqade_#1337)
-- **Qbox/ox conversion**: [FruitMob RP](https://github.com/fruitmob)
+- **Qbox/ox conversion & enhancements**: [FruitMob RP](https://github.com/fruitmob)
 
 ## License
 
