@@ -1,10 +1,6 @@
--- ox_inventory server export handler
--- Item registered in ox_inventory/data/items.lua with:
---   server = { export = 'astudios-skating.skateboard' }
--- Per FMRP convention: NO _ placeholder (FiveM drops leading nil args)
+-- Server-side toggle event (for admin commands, other scripts)
+-- The skateboard item itself uses a client export (see client/main.lua)
 
-exports(Config.ItemName, function(event, item, inventory, slot, data)
-    if event == 'usingItem' then
-        TriggerClientEvent('astudios-skating:client:toggle', inventory.id)
-    end
+RegisterNetEvent('astudios-skating:server:toggle', function()
+    TriggerClientEvent('astudios-skating:client:toggle', source)
 end)

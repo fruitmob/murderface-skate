@@ -10,12 +10,13 @@ Converted for the **Qbox + ox_lib + ox_inventory** stack. 5-minute setup, zero e
 
 ## Features
 
-- **Use from inventory** — place your board, use again to pick it up. Simple toggle.
+- **Use from inventory** — use item to ride, use again to dismount. Simple toggle.
 - **Full physics** — WASD steering, charge-jump with Space, ragdoll on high-speed collisions
-- **Clean integration** — ox_inventory item with tooltip controls, ox_lib notifications
+- **Clean integration** — ox_inventory client export, ox_lib notifications
 - **Auto-cleanup** — board despawns on death, disconnect, or resource restart. No ghost entities.
-- **Configurable** — speed, jump height, and dismount distance all in one config file
-- **Lightweight** — ~300 lines total, no database, no polling, no bloat
+- **Configurable** — speed and jump height in one config file
+- **Lightweight** — ~270 lines total, no database, no polling, no bloat
+- **Self-contained** — skateboard prop and invisible ped models included in `stream/`
 
 ## Quick Start
 
@@ -28,10 +29,12 @@ git clone https://github.com/fruitmob/astudios-skating.git
 ```lua
 ['skateboard'] = {
     label = 'Skateboard',
-    weight = 3000,
+    weight = 1000,
+    stack = false,
+    close = true,
     consume = 0,
-    description = 'Use to place/pickup. G - Mount/Dismount | Space - Jump | E - Pick up',
-    server = { export = 'astudios-skating.skateboard' },
+    description = 'A well-worn skateboard. WASD to move, Space to jump.',
+    client = { export = 'astudios-skating.skateboard' },
 },
 ```
 
@@ -58,7 +61,7 @@ That's it. No SQL, no extra dependencies, no config rabbit holes.
 
 Wipe out at high speed? Board despawns automatically — just use the item again.
 
-Controls are shown in the item tooltip when you hover over it in inventory.
+Controls are shown via notification when you mount the board.
 
 ## Configuration
 
@@ -69,24 +72,34 @@ Config.MaxSpeedKmh = 52            -- Max speed in km/h (default: 52)
 Config.MaxJumpHeight = 6.5         -- Jump boost (6.5 = superhuman, ~2.0 = realistic)
 ```
 
+## How It Works
+
+The skateboard uses a hidden BMX bicycle for physics, with a visible skateboard prop attached to it. An invisible ped drives the BMX while your player character is attached on top with a skating animation. This gives you full vehicle physics (momentum, gravity, collisions) while looking like you're skating.
+
+### Models
+
+The resource streams two models in `stream/`:
+- `taymckenzienz_skateboard01.ydr` — the visible skateboard prop (by TayMcKenzieNZ)
+- `p_defilied_ragdoll_01_s.ydr` — invisible driver ped
+
+The BMX model is vanilla GTA5 and doesn't need streaming.
+
 ## Dependencies
 
 | Resource | Link |
 |----------|------|
 | ox_lib | [overextended/ox_lib](https://github.com/overextended/ox_lib) |
 | ox_inventory | [overextended/ox_inventory](https://github.com/overextended/ox_inventory) |
-| qbx_core | [Qbox-project/qbx_core](https://github.com/Qbox-project/qbx_core) |
 
-If you're running Qbox with the ox stack, you already have everything you need.
+Works with Qbox (qbx_core) or any framework that uses ox_lib + ox_inventory.
 
-## What Changed From the Original
+## What Changed in v2.0.0
 
-- Removed QBCore/ESX dual-framework code (was 100% copy-pasted twice)
-- Replaced `QBCore.Functions.CreateUseableItem` with ox_inventory server export
-- Added ox_lib for notifications and asset loading
-- Simplified to instant mount/dismount — use item to ride, use again to stop
-- Auto-cleanup on wipeout, death, and resource restart
-- Cleaned up from ~365 lines to ~230
+- **Fixed: item use did nothing** — switched from `server` export to `client` export (ox_inventory's `useSlot()` never initiated the server callback chain for items without a `client` table)
+- **Fixed: infinite hang on invalid models** — added `IsModelValid()` pre-checks and timeouts on all model/entity loading
+- **Fixed: missing skateboard model** — bundled `taymckenzienz_skateboard01.ydr` in `stream/` (the original conversion never included a skateboard prop)
+- **Cleaned up** — removed debug prints, simplified server script
+- Self-contained: no longer depends on external resources for the skateboard prop model
 
 ## Preview
 
@@ -95,7 +108,8 @@ Original demo (core mechanics are the same): https://www.youtube.com/watch?v=sTf
 ## Credits
 
 - **Original script**: [Apex Studios](https://github.com/apx-studios) (Aqade_#1337)
-- **Qbox/ox conversion**: [FruitMob RP](https://github.com/fruitmob)
+- **Skateboard model**: [TayMcKenzieNZ](https://github.com/TayMcKenzieNZ)
+- **Qbox/ox conversion + v2.0 fixes**: [FruitMob RP](https://github.com/fruitmob)
 
 ## License
 
