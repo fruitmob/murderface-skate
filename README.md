@@ -1,8 +1,12 @@
-# astudios-skating (Qbox + ox Fork)
+# murderface-skate
+
+[![License](https://img.shields.io/github/license/fruitmob/murderface-skate)](LICENSE)
+[![Release](https://img.shields.io/github/v/release/fruitmob/murderface-skate)](https://github.com/fruitmob/murderface-skate/releases)
+[![GitHub Stars](https://img.shields.io/github/stars/fruitmob/murderface-skate)](https://github.com/fruitmob/murderface-skate)
 
 **Free, open-source skateboarding for FiveM** — drop in, configure, ride.
 
-Converted for the **Qbox + ox_lib + ox_inventory** stack. 5-minute setup, zero escrow, zero dependencies you don't already have.
+Built for the **Qbox + ox_lib + ox_inventory** stack. 5-minute setup, zero escrow, zero dependencies you don't already have.
 
 > Forked from [apx-studios/astudios-skating](https://github.com/apx-studios/astudios-skating) — original by Aqade_#1337
 
@@ -22,7 +26,7 @@ Converted for the **Qbox + ox_lib + ox_inventory** stack. 5-minute setup, zero e
 
 **1.** Clone or download into your resources:
 ```
-git clone https://github.com/fruitmob/astudios-skating.git
+git clone https://github.com/fruitmob/murderface-skate.git
 ```
 
 **2.** Add the item to `ox_inventory/data/items.lua`:
@@ -34,7 +38,7 @@ git clone https://github.com/fruitmob/astudios-skating.git
     close = true,
     consume = 0,
     description = 'A well-worn skateboard. WASD to move, Space to jump.',
-    client = { export = 'astudios-skating.skateboard' },
+    client = { export = 'murderface-skate.skateboard' },
 },
 ```
 
@@ -42,7 +46,7 @@ git clone https://github.com/fruitmob/astudios-skating.git
 
 **4.** Add to `server.cfg`:
 ```cfg
-ensure astudios-skating
+ensure murderface-skate
 ```
 
 **5.** Restart, give yourself a board: `/giveitem [id] skateboard 1`
@@ -105,12 +109,21 @@ Works with Qbox (qbx_core) or any framework that uses ox_lib + ox_inventory.
 
 Original demo (core mechanics are the same): https://www.youtube.com/watch?v=sTfMHY3IFZY
 
+## Contributing
+
+PRs welcome — bug fixes, new tricks, config options, or framework compatibility.
+
+1. Fork the repo
+2. Make your changes
+3. Test in-game on an ox_inventory server
+4. Open a PR with a clear description
+
 ## Credits
 
 - **Original script**: [Apex Studios](https://github.com/apx-studios) (Aqade_#1337)
 - **Skateboard model**: [TayMcKenzieNZ](https://github.com/TayMcKenzieNZ)
-- **Qbox/ox conversion + v2.0 fixes**: [FruitMob RP](https://github.com/fruitmob)
+- **Qbox/ox conversion + v2.0 fixes**: [MurderFace (FMRP)](https://github.com/fruitmob)
 
 ## License
 
-Same as the original — free to use and modify.
+[MIT](LICENSE) — free to use and modify.
