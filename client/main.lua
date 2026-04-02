@@ -5,7 +5,7 @@ local busy = false
 local ANIM_DICTS = { 'move_strafe@stealth', 'move_crouch_proto' }
 local MODEL_BMX   = GetHashKey('bmx')
 local MODEL_BOARD = GetHashKey('taymckenzienz_skateboard01')
-local MODEL_PED   = 68070371
+local MODEL_PED   = GetHashKey('p_defilied_ragdoll_01_s') -- invisible driver ped
 
 -- ox_inventory client export — triggered when player uses skateboard from inventory
 exports('skateboard', function(data, slot)
